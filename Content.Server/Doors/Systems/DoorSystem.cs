@@ -50,6 +50,8 @@ public sealed class DoorSystem : SharedDoorSystem
         SubscribeLocalEvent<DoorComponent, WeldableAttemptEvent>(OnWeldAttempt);
         SubscribeLocalEvent<DoorComponent, WeldableChangedEvent>(OnWeldChanged);
         SubscribeLocalEvent<DoorComponent, GotEmaggedEvent>(OnEmagged);
+        SubscribeLocalEvent<DoorComponent, EntInsertedIntoContainerMessage>(OnInserted);
+        SubscribeLocalEvent<DoorComponent, EntRemovedFromContainerMessage>(OnRemoved);
     }
 
     protected override void OnActivate(EntityUid uid, DoorComponent door, ActivateInWorldEvent args)
@@ -305,6 +307,19 @@ public sealed class DoorSystem : SharedDoorSystem
 
             var board = EntityManager.SpawnEntity(door.BoardPrototype, Transform(uid).Coordinates);
 
+            // Initially, doors have their AccessLists set through the
+            // component system, so it needs to be copied to the board here,
+            // so the door doesn't end up with blank permissions.
+
+            if (TryComp(board, out AccessReaderComponent? boardAccessReader)
+                && TryComp(uid, out AccessReaderComponent? doorAccessReader))
+                boardAccessReader.AccessLists = doorAccessReader.AccessLists;
+
+            // This insertion will cause a second writing of the door's
+            // AccessLists through the event system. Not efficient, but not
+            // frequent either. This could be avoided by re-arranging how
+            // AccessLists are set on door prototypes.
+
             if(!boardContainer.Insert(board))
                 Logger.Warning($"Couldn't insert board {ToPrettyString(board)} into door {ToPrettyString(uid)}!");
         });
@@ -323,6 +338,39 @@ public sealed class DoorSystem : SharedDoorSystem
                 PlaySound(uid, door.SparkSound, AudioParams.Default.WithVolume(8), args.UserUid, false);
                 args.Handled = true;
             }
+        }
+    }
+
+    private void OnInserted(EntityUid uid, DoorComponent component, ContainerModifiedMessage args)
+    {
+        if (args.Container.ID == "board"
+            && TryComp<AccessReaderComponent>(args.Entity, out var insertedReaderComponent))
+        {
+            // We check for 1 and not 0 because the board's already in the container at this point.
+            if (_containerSystem.GetContainer(uid, "board").ContainedEntities.Count != 1) {
+                Logger.Warning($"Attempted to insert a second board {ToPrettyString(args.Entity)} into door {ToPrettyString(uid)}!");
+                return;
+            }
+
+            // If you didn't have an AccessReader, you do now.
+            var readerComponent = EnsureComp<AccessReaderComponent>(uid);
+
+            readerComponent.AccessLists = insertedReaderComponent.AccessLists;
+        }
+    }
+
+    private void OnRemoved(EntityUid uid, DoorComponent component, ContainerModifiedMessage args)
+    {
+        if (args.Container.ID == "board"
+            && TryComp<AccessReaderComponent>(args.Entity, out var ejectedReaderComponent)
+            && TryComp<AccessReaderComponent>(uid, out var readerComponent))
+        {
+            // Copy the airlock's access lists to the board.
+            ejectedReaderComponent.AccessLists = readerComponent.AccessLists;
+
+            // This assumes there will only ever be one "board" and that
+            // its removal signifies loss of any need for an AccessReader.
+            RemComp(uid, readerComponent);
         }
     }
 
