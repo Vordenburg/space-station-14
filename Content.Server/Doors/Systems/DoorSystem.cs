@@ -20,6 +20,7 @@ using Robust.Shared.Audio;
 using Robust.Shared.Containers;
 using Robust.Shared.Physics.Dynamics;
 using Robust.Shared.Player;
+using Robust.Shared.Timing;
 using System.Linq;
 using Robust.Shared.Physics.Components;
 using Robust.Shared.Physics.Events;
@@ -276,26 +277,37 @@ public sealed class DoorSystem : SharedDoorSystem
 
     private void OnMapInit(EntityUid uid, DoorComponent door, MapInitEvent args)
     {
-        // Ensure that the construction component is aware of the board container.
-        if (TryComp(uid, out ConstructionComponent? construction))
-            _constructionSystem.AddContainer(uid, "board", construction);
+        // This event fires before the Construction system has had enough time
+        // to insert any boards for us to check, so give it a moment.
+        // Otherwise, we will spawn unlimited boards upon construction.
+        // This isn't ideal, but it works.
 
-        // We don't do anything if this is null or empty.
-        if (string.IsNullOrEmpty(door.BoardPrototype))
-            return;
-
-        var container = _containerSystem.EnsureContainer<Container>(uid, "board", out var existed);
-
-        if (existed && container.ContainedEntities.Count != 0)
+        Timer.Spawn(1, () =>
         {
-            // We already contain a board. Note: We don't check if it's the right one!
-            return;
-        }
+            if (Deleted(uid))
+                return;
 
-        var board = EntityManager.SpawnEntity(door.BoardPrototype, Transform(uid).Coordinates);
+            if (string.IsNullOrEmpty(door.BoardPrototype))
+                return;
 
-        if(!container.Insert(board))
-            Logger.Warning($"Couldn't insert board {ToPrettyString(board)} into door {ToPrettyString(uid)}!");
+            // Normally, these two things could be specified in YAML under
+            // their respective components, but since we're doing all this
+            // anyway, we can add the container and tell the Construction
+            // system about it here to decrease the amount of bookkeeping.
+
+            var boardContainer = _containerSystem.EnsureContainer<Container>(uid, "board");
+
+            if (TryComp(uid, out ConstructionComponent? construction))
+                _constructionSystem.AddContainer(uid, "board", construction);
+
+            if (boardContainer.ContainedEntities.Count != 0)
+                return;
+
+            var board = EntityManager.SpawnEntity(door.BoardPrototype, Transform(uid).Coordinates);
+
+            if(!boardContainer.Insert(board))
+                Logger.Warning($"Couldn't insert board {ToPrettyString(board)} into door {ToPrettyString(uid)}!");
+        });
     }
 
     private void OnEmagged(EntityUid uid, DoorComponent door, GotEmaggedEvent args)
