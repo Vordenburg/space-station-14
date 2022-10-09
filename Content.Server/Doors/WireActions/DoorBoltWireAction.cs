@@ -38,7 +38,11 @@ public sealed class DoorBoltWireAction : BaseWireAction
     {
         if (EntityManager.TryGetComponent<AirlockComponent>(wire.Owner, out var door))
         {
-            if (!door.BoltsDown)
+            // Only drop the bolts down if there's still power when this wire
+            // is cut. Otherwise, it's impossible to deconstruct an airlock,
+            // because its deconstruction requirements are that all the wires
+            // are cut AND it's not bolted.
+            if (door.IsPowered() && !door.BoltsDown)
             {
                 door.SetBoltsWithAudio(true);
             }
