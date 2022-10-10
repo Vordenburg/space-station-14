@@ -1,3 +1,5 @@
+using Content.Server.Construction;
+using Content.Server.Construction.Components;
 using Content.Server.Doors.Components;
 using Content.Server.Power.Components;
 using Content.Server.Power.EntitySystems;
@@ -9,6 +11,8 @@ using Content.Shared.Doors.Systems;
 using Content.Shared.Interaction;
 using Content.Shared.Popups;
 using Robust.Server.GameObjects;
+using Robust.Shared.Containers;
+using Robust.Shared.Timing;
 
 namespace Content.Server.Doors.Systems
 {
@@ -16,6 +20,9 @@ namespace Content.Server.Doors.Systems
     {
         [Dependency] private readonly WiresSystem _wiresSystem = default!;
         [Dependency] private readonly PowerReceiverSystem _power = default!;
+        [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
+        [Dependency] private readonly SharedContainerSystem _containerSystem = default!;
+        [Dependency] private readonly ConstructionSystem _constructionSystem = default!;
 
         public override void Initialize()
         {
@@ -28,6 +35,81 @@ namespace Content.Server.Doors.Systems
             SubscribeLocalEvent<AirlockComponent, ActivateInWorldEvent>(OnActivate, before: new [] {typeof(DoorSystem)});
             SubscribeLocalEvent<AirlockComponent, DoorGetPryTimeModifierEvent>(OnGetPryMod);
             SubscribeLocalEvent<AirlockComponent, BeforeDoorPryEvent>(OnDoorPry);
+
+            SubscribeLocalEvent<AirlockComponent, MapInitEvent>(OnMapInit);
+            SubscribeLocalEvent<AirlockComponent, EntInsertedIntoContainerMessage>(OnInserted);
+            SubscribeLocalEvent<AirlockComponent, EntRemovedFromContainerMessage>(OnRemoved);
+        }
+
+        private void OnMapInit(EntityUid uid, AirlockComponent door, MapInitEvent args)
+        {
+            // This Timer is here for the same reason that it exists on DoorSystem.
+            // See the comments there for an explanation.
+            Timer.Spawn(1, () =>
+            {
+                if (Deleted(uid))
+                    return;
+
+                var paintContainer = _containerSystem.EnsureContainer<Container>(uid, "paint");
+
+                if (TryComp(uid, out ConstructionComponent? construction))
+                    _constructionSystem.AddContainer(uid, "paint", construction);
+
+                if (paintContainer.ContainedEntities.Count != 0)
+                    return;
+
+                // I'm using a container to transfer state across the construction graph.
+                // I have no idea how else to accomplish this.
+                //
+                // If this becomes more common, it might be better to rework Construction
+                // to support arbitrary metadata which is transferred between entities,
+                // or change IGraphAction to support accessing the old Entity.
+
+                var paint = EntityManager.SpawnEntity("AirlockAssemblyPaint", Transform(uid).Coordinates);
+
+                // DoorVisuals.BaseRSI is only set when an airlock is painted,
+                // so we need the SpriteComponent's RSI.
+                if (EntityManager.TryGetComponent<SpriteComponent>(uid, out var doorSpriteComponent)
+                    && EntityManager.TryGetComponent<SpriteComponent>(paint, out var paintSpriteComponent)
+                    && doorSpriteComponent.BaseRSIPath != null)
+                {
+                    paintSpriteComponent.BaseRSIPath = doorSpriteComponent.BaseRSIPath;
+                }
+
+                if(!paintContainer.Insert(paint))
+                    Logger.Warning($"Couldn't insert paint {ToPrettyString(paint)} into door {ToPrettyString(uid)}!");
+            });
+        }
+
+        private void OnInserted(EntityUid uid, AirlockComponent component, ContainerModifiedMessage args)
+        {
+            if (args.Container.ID == "paint"
+                && TryComp<SpriteComponent>(args.Entity, out var spriteComponent)
+                && spriteComponent.BaseRSIPath != null)
+            {
+                _appearance.SetData(uid, DoorVisuals.BaseRSI, spriteComponent.BaseRSIPath);
+            }
+        }
+
+        private void OnRemoved(EntityUid uid, AirlockComponent component, ContainerModifiedMessage args)
+        {
+            if (args.Container.ID == "paint"
+                && TryComp<SpriteComponent>(args.Entity, out var paintSpriteComponent))
+            {
+                // First check if the door has been painted.
+                // If it has, there will be a new RSI in the Appearance data.
+                if (_appearance.TryGetData(uid, DoorVisuals.BaseRSI, out var base_rsi)
+                    && base_rsi != null)
+                {
+                    paintSpriteComponent.BaseRSIPath = (string) base_rsi;
+                }
+                // Otherwise, just get the default sprite for the door.
+                else if (TryComp<SpriteComponent>(uid, out var airlockSpriteComponent)
+                    && airlockSpriteComponent.BaseRSIPath != null)
+                {
+                    paintSpriteComponent.BaseRSIPath = airlockSpriteComponent.BaseRSIPath;
+                }
+            }
         }
 
         private void OnPowerChanged(EntityUid uid, AirlockComponent component, PowerChangedEvent args)

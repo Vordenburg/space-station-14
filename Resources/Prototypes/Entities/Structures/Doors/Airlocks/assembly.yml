@@ -37,8 +37,23 @@
       behaviors:
       - !type:DoActsBehavior
         acts: ["Destruction"]
+  - type: ContainerContainer
+    containers:
+      board: !type:Container
+      paint: !type:Container
   - type: Construction
     graph: Airlock
     node: assembly
+    containers:
+      - board
+      - paint
+  - type: AirlockAssembly
   placement:
     mode: SnapgridCenter
+
+- type: entity
+  id: AirlockAssemblyPaint
+  name: airlock assembly paint
+  components:
+  - type: Sprite
+    sprite: Structures/Doors/Airlocks/Standard/basic.rsi
