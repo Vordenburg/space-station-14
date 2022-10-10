@@ -118,7 +118,7 @@
     graph: Airlock
     node: glassAirlock
   - type: PaintableAirlock
-    group: Windoor
+    group: Glass
 
 - type: entity
   parent: AirlockGlass
@@ -127,8 +127,6 @@
   components:
   - type: Sprite
     sprite: Structures/Doors/Airlocks/Glass/engineering.rsi
-  - type: PaintableAirlock
-    group: Glass
 
 - type: entity
   parent: AirlockGlass
@@ -137,8 +135,6 @@
   components:
   - type: Sprite
     sprite: Structures/Doors/Airlocks/Glass/maint.rsi
-  - type: PaintableAirlock
-    group: Glass
 
 - type: entity
   parent: AirlockGlass
@@ -147,8 +143,6 @@
   components:
   - type: Sprite
     sprite: Structures/Doors/Airlocks/Glass/atmospherics.rsi
-  - type: PaintableAirlock
-    group: Glass
 
 - type: entity
   parent: AirlockGlass
@@ -157,8 +151,6 @@
   components:
   - type: Sprite
     sprite: Structures/Doors/Airlocks/Glass/cargo.rsi
-  - type: PaintableAirlock
-    group: Glass
 
 - type: entity
   parent: AirlockGlass
@@ -167,8 +159,6 @@
   components:
   - type: Sprite
     sprite: Structures/Doors/Airlocks/Glass/medical.rsi
-  - type: PaintableAirlock
-    group: Glass
 
 - type: entity
   parent: AirlockGlass
@@ -177,8 +167,6 @@
   components:
   - type: Sprite
     sprite: Structures/Doors/Airlocks/Glass/virology.rsi
-  - type: PaintableAirlock
-    group: Glass
 
 - type: entity
   parent: AirlockGlass
@@ -187,8 +175,6 @@
   components:
   - type: Sprite
     sprite: Structures/Doors/Airlocks/Glass/science.rsi
-  - type: PaintableAirlock
-    group: Glass
 
 - type: entity
   parent: AirlockGlass
@@ -197,8 +183,6 @@
   components:
   - type: Sprite
     sprite: Structures/Doors/Airlocks/Glass/command.rsi
-  - type: PaintableAirlock
-    group: Glass
 
 - type: entity
   parent: AirlockGlass
@@ -207,5 +191,3 @@
   components:
   - type: Sprite
     sprite: Structures/Doors/Airlocks/Glass/security.rsi
-  - type: PaintableAirlock
-    group: Glass
