@@ -17,7 +17,7 @@
   id: Glass
   iconPriority: 90
   stylePaths:
-    basic:       Structures/Doors/Airlocks/Glass/basic.rsi
+    basic:       Structures/Doors/Airlocks/Glass/glass.rsi
     command:     Structures/Doors/Airlocks/Glass/command.rsi
     science:     Structures/Doors/Airlocks/Glass/science.rsi
     cargo:       Structures/Doors/Airlocks/Glass/cargo.rsi
@@ -26,12 +26,6 @@
     medical:     Structures/Doors/Airlocks/Glass/medical.rsi
     security:    Structures/Doors/Airlocks/Glass/security.rsi
     virology:    Structures/Doors/Airlocks/Glass/virology.rsi
-
-- type: AirlockGroup
-  id: Windoor
-  iconPriority: 80
-  stylePaths:
-    basic:       Structures/Doors/Airlocks/Glass/glass.rsi
 
 - type: AirlockGroup
   id: External
