@@ -2,7 +2,6 @@ using Content.Shared.Doors.Components;
 using Content.Shared.Doors.Systems;
 using Robust.Client.GameObjects;
 using Robust.Shared.Audio;
-using Robust.Shared.GameObjects;
 using Robust.Shared.Player;
 
 namespace Content.Client.Doors;
