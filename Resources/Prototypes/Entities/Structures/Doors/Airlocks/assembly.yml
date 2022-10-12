@@ -55,5 +55,4 @@
   id: AirlockAssemblyPaint
   name: airlock assembly paint
   components:
-  - type: Sprite
-    sprite: Structures/Doors/Airlocks/Standard/basic.rsi
+  - type: AirlockAssemblyPaint

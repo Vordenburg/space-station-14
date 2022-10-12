@@ -1,18 +1,22 @@
+using System.Linq;
 using Content.Server.Construction;
 using Content.Server.Construction.Components;
 using Content.Server.Doors.Components;
 using Content.Server.Power.Components;
 using Content.Server.Power.EntitySystems;
-using Content.Shared.Tools.Components;
 using Content.Server.Wires;
+using Content.Shared.AirlockPainter.Prototypes;
+using Content.Shared.AirlockPainter;
 using Content.Shared.Doors;
 using Content.Shared.Doors.Components;
 using Content.Shared.Doors.Systems;
 using Content.Shared.Interaction;
 using Content.Shared.Popups;
+using Content.Shared.Tools.Components;
 using Robust.Server.GameObjects;
 using Robust.Shared.Containers;
 using Robust.Shared.Timing;
+using Robust.Shared.Prototypes;
 
 namespace Content.Server.Doors.Systems
 {
@@ -23,6 +27,7 @@ namespace Content.Server.Doors.Systems
         [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
         [Dependency] private readonly SharedContainerSystem _containerSystem = default!;
         [Dependency] private readonly ConstructionSystem _constructionSystem = default!;
+        [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
 
         public override void Initialize()
         {
@@ -65,49 +70,58 @@ namespace Content.Server.Doors.Systems
                 // to support arbitrary metadata which is transferred between entities,
                 // or change IGraphAction to support accessing the old Entity.
 
+                if (!TryComp(uid, out PaintableAirlockComponent? paintableComponent))
+                    return;
+
                 var paint = EntityManager.SpawnEntity("AirlockAssemblyPaint", Transform(uid).Coordinates);
+
+                if (!_prototypeManager.TryIndex<AirlockGroupPrototype>(paintableComponent.Group, out var airlockGroup))
+                {
+                    Logger.Error("AirlockGroup not defined: %s", paintableComponent.Group);
+                    return;
+                }
 
                 // DoorVisuals.BaseRSI is only set when an airlock is painted,
                 // so we need the SpriteComponent's RSI.
-                if (EntityManager.TryGetComponent<SpriteComponent>(uid, out var doorSpriteComponent)
-                    && EntityManager.TryGetComponent<SpriteComponent>(paint, out var paintSpriteComponent)
-                    && doorSpriteComponent.BaseRSIPath != null)
+                if (TryComp(uid, out SpriteComponent? airlockSpriteComponent)
+                    && TryComp(paint, out SharedAirlockAssemblyPaintComponent? paintComponent)
+                    && airlockSpriteComponent.BaseRSIPath != null)
                 {
-                    paintSpriteComponent.BaseRSIPath = doorSpriteComponent.BaseRSIPath;
+                    paintComponent.Style = airlockGroup.StylePaths.FirstOrDefault(x => x.Value == airlockSpriteComponent.BaseRSIPath).Key;
                 }
 
                 if(!paintContainer.Insert(paint))
-                    Logger.Warning($"Couldn't insert paint {ToPrettyString(paint)} into door {ToPrettyString(uid)}!");
+                    Logger.Warning($"Couldn't insert paint {ToPrettyString(paint)} into airlock {ToPrettyString(uid)}!");
             });
         }
 
         private void OnInserted(EntityUid uid, AirlockComponent component, ContainerModifiedMessage args)
         {
             if (args.Container.ID == "paint"
-                && TryComp<SpriteComponent>(args.Entity, out var spriteComponent)
-                && spriteComponent.BaseRSIPath != null)
+                && TryComp(args.Entity, out SharedAirlockAssemblyPaintComponent? paintComponent)
+                && paintComponent.Style != null
+                && TryComp(uid, out PaintableAirlockComponent? paintableComponent)
+                && _prototypeManager.TryIndex(paintableComponent.Group, out AirlockGroupPrototype? airlockGroup)
+                && airlockGroup.StylePaths.TryGetValue(paintComponent.Style, out string? rsiPath)
+                && rsiPath != null)
             {
-                _appearance.SetData(uid, DoorVisuals.BaseRSI, spriteComponent.BaseRSIPath);
+                _appearance.SetData(uid, DoorVisuals.BaseRSI, rsiPath);
             }
         }
 
         private void OnRemoved(EntityUid uid, AirlockComponent component, ContainerModifiedMessage args)
         {
             if (args.Container.ID == "paint"
-                && TryComp<SpriteComponent>(args.Entity, out var paintSpriteComponent))
+                && TryComp(args.Entity, out SharedAirlockAssemblyPaintComponent? paintComponent)
+                && TryComp(uid, out PaintableAirlockComponent? paintableComponent)
+                && _prototypeManager.TryIndex(paintableComponent.Group, out AirlockGroupPrototype? airlockGroup))
             {
-                // First check if the door has been painted.
-                // If it has, there will be a new RSI in the Appearance data.
-                if (_appearance.TryGetData(uid, DoorVisuals.BaseRSI, out var base_rsi)
-                    && base_rsi != null)
+                // By virtue of airlocks having paint inserted into them on MapInit now,
+                // DoorVisuals.BaseRSI should be set under normal circumstances.
+                if (_appearance.TryGetData(uid, DoorVisuals.BaseRSI, out var rsiPath)
+                    && rsiPath != null)
                 {
-                    paintSpriteComponent.BaseRSIPath = (string) base_rsi;
-                }
-                // Otherwise, just get the default sprite for the door.
-                else if (TryComp<SpriteComponent>(uid, out var airlockSpriteComponent)
-                    && airlockSpriteComponent.BaseRSIPath != null)
-                {
-                    paintSpriteComponent.BaseRSIPath = airlockSpriteComponent.BaseRSIPath;
+                    paintComponent.Style = airlockGroup.StylePaths.FirstOrDefault(x => x.Value == (string) rsiPath).Key;
                 }
             }
         }
