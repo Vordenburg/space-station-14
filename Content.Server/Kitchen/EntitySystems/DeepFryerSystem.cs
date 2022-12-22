@@ -173,7 +173,7 @@ namespace Content.Server.Kitchen.EntitySystems
                                         reagent.Quantity,
                                         EntityManager,
                                         null,
-                                        null));
+                                        1f));
                             }
                         }
 
