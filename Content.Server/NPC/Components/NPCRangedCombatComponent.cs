@@ -1,5 +1,6 @@
 using Content.Server.NPC.Systems;
 using Robust.Shared.Audio;
+using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom;
 
 namespace Content.Server.NPC.Components;
 
@@ -54,4 +55,16 @@ public sealed class NPCRangedCombatComponent : Component
     /// </summary>
     [ViewVariables(VVAccess.ReadWrite)]
     public SoundSpecifier? SoundTargetInLOS;
+
+    /// <summary>
+    /// Delay after sound has been played.
+    /// </summary>
+    [ViewVariables(VVAccess.ReadWrite)]
+    public TimeSpan SoundTargetInLOSCooldown = TimeSpan.FromSeconds(2);
+
+    /// <summary>
+    /// When can the sound be played again.
+    /// </summary>
+    [ViewVariables(VVAccess.ReadWrite), DataField("nextSoundTargetInLOS", customTypeSerializer: typeof(TimeOffsetSerializer))]
+    public TimeSpan NextSoundTargetInLOS = TimeSpan.Zero;
 }

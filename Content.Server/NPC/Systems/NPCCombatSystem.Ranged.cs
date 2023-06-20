@@ -108,8 +108,11 @@ public sealed partial class NPCCombatSystem
                 continue;
             }
 
-            if (!oldInLos && comp.SoundTargetInLOS != null)
+            if (!oldInLos &&
+                comp.SoundTargetInLOS != null &&
+                _timing.CurTime >= comp.NextSoundTargetInLOS)
             {
+                comp.NextSoundTargetInLOS = _timing.CurTime + comp.SoundTargetInLOSCooldown;
                 _audio.PlayPvs(comp.SoundTargetInLOS, uid);
             }
 
