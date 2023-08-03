@@ -60,9 +60,14 @@ public sealed class ThirstSystem : EntitySystem
         ResetThirst(component);
     }
 
-    private ThirstThreshold GetThirstThreshold(ThirstComponent component, float amount)
+    /// <summary>
+    /// Gets the thirst threshold for an entity based on the amount of liquid specified.
+    /// If a specific amount isn't specified, just uses the current thirst of the entity
+    /// </summary>
+    public ThirstThreshold GetThirstThreshold(ThirstComponent component, float? amount = null)
     {
-        ThirstThreshold result = ThirstThreshold.Dead;
+        amount ??= component.CurrentThirst;
+        var result = ThirstThreshold.Dead;
         var value = component.ThirstThresholds[ThirstThreshold.OverHydrated];
         foreach (var threshold in component.ThirstThresholds)
         {
