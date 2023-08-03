@@ -27,6 +27,8 @@
               key: IdleTime
           operator: !type:WaitOperator
             key: IdleTime
+      preconditions:
+        - !type:HungerPrecondition
 
     # Picks nearby drink then consumes it and waits idle time
     - tasks:
@@ -54,3 +56,5 @@
               key: IdleTime
           operator: !type:WaitOperator
             key: IdleTime
+      preconditions:
+        - !type:ThirstPrecondition
