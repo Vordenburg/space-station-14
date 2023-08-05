@@ -7,10 +7,6 @@
   - type: Sprite
     sprite: Objects/Consumable/Smokeables/Cigarettes/cigarette.rsi
     state: unlit-icon
-  - type: Tag
-    tags:
-      - Cigarette
-      - Trash
   - type: SpaceGarbage
   - type: Clothing
     sprite: Objects/Consumable/Smokeables/Cigarettes/cigarette.rsi

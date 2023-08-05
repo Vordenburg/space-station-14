@@ -45,7 +45,7 @@
       amount: 8
   - type: ItemCounter
     count:
-      tags: [Cigar]
+      components: [Cigar]
     composite: true
     layerStates:
     - cigar1

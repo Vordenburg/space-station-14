@@ -159,9 +159,6 @@
   id: Chicken
 
 - type: Tag
-  id: Cigarette
-
-- type: Tag
   id: CigFilter
 
 - type: Tag

@@ -7,10 +7,6 @@
   - type: Sprite
     sprite: Objects/Consumable/Smokeables/Cannabis/joint.rsi
     state: unlit-icon
-  - type: Tag
-    tags:
-      - Cigarette
-      - Trash
   - type: SpaceGarbage
   - type: Clothing
     sprite: Objects/Consumable/Smokeables/Cannabis/joint.rsi
@@ -38,10 +34,6 @@
   - type: Sprite
     sprite: Objects/Consumable/Smokeables/Cannabis/blunt.rsi
     state: unlit-icon
-  - type: Tag
-    tags:
-      - Cigarette
-      - Trash
   - type: SpaceGarbage
   - type: Clothing
     sprite: Objects/Consumable/Smokeables/Cannabis/blunt.rsi
