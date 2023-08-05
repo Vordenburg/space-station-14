@@ -1,4 +1,4 @@
-﻿using Content.Shared.Storage.EntitySystems;
+using Content.Shared.Storage.EntitySystems;
 using Content.Shared.Whitelist;
 
 namespace Content.Shared.Storage.Components
@@ -13,7 +13,7 @@ namespace Content.Shared.Storage.Components
     ///  - type: ItemCounter
     ///    amount: 6 # Note: this field can be omitted.
     ///    count:
-    ///      tags: [Cigarette]
+    ///      components: [Cigar]
     /// </code>
     [RegisterComponent]
     [Access(typeof(SharedItemCounterSystem))]
@@ -24,7 +24,7 @@ namespace Content.Shared.Storage.Components
 
         [DataField("amount")]
         public int? MaxAmount { get; set; }
-    
+
         /// <summary>
         /// Default IconLayer stack.
         /// </summary>
